@@ -65,10 +65,18 @@ CREATE OR REPLACE VIEW pgrest.contingent AS
   SELECT * from contingent;
 """
 
+
 <- plx.mk-user-func "pgrest_param():json" ':~> plv8x.context'
 <- plx.mk-user-func "pgrest_param(text):int" ':~> plv8x.context?[it]'
 <- plx.mk-user-func "pgrest_param(text):text" ':~> plv8x.context?[it]'
 <- plx.mk-user-func "pgrest_param(json):json" ':~> plv8x.context = it'
+
+<- plx.query """
+CREATE OR REPLACE VIEW pgrest.contingent_left AS
+  WITH auth as (select ensure_member() as member_id)
+    SELECT * from member_contingent_left
+      WHERE member_contingent_left.member_id = (select member_id from auth);
+"""
 
 cols <- mount-default plx, 'pgrest', route
 
