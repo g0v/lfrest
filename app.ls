@@ -20,7 +20,12 @@ express = try require \express
 throw "express required for starting server" unless express
 app = express!
 
+app.use express.cookieParser!
 app.use express.json!
+
+pgparam = (req, res, next) ->
+  session = req.cookies.liquid_feedback_session
+  plx.query "select pgrest_param($1::json)" [{session}], next!
 
 route = (path, fn) ->
   fullpath = "#{
@@ -29,7 +34,7 @@ route = (path, fn) ->
       | '/'  => ''
       | _    => "#prefix/"
     }#path"
-  app.all fullpath, routes.route path, fn
+  app.all fullpath, pgparam, routes.route path, fn
 
 <- plx.import-bundle \lfrest require.resolve \./package.json
 
@@ -71,6 +76,7 @@ CREATE OR REPLACE VIEW pgrest.contingent AS
 <- plx.mk-user-func "pgrest_param(text):text" ':~> plv8x.context?[it]'
 <- plx.mk-user-func "pgrest_param(json):json" ':~> plv8x.context = it'
 
+<- plx.query '''select pgrest_param('{}'::json)'''
 <- plx.query """
 CREATE OR REPLACE VIEW pgrest.contingent_left AS
   WITH auth as (select ensure_member() as member_id)
