@@ -68,6 +68,12 @@ CREATE OR REPLACE VIEW pgrest.member_count AS
 
 CREATE OR REPLACE VIEW pgrest.contingent AS
   SELECT * from contingent;
+
+CREATE OR REPLACE VIEW pgrest.issue AS
+  SELECT *,
+    (SELECT COALESCE(ARRAY_TO_JSON(ARRAY_AGG(_)), '[]') FROM (SELECT * FROM initiative
+        WHERE initiative.issue_id = issue.id) AS _) AS initiatives
+  FROM issue;
 """
 
 
