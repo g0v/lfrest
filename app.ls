@@ -11,6 +11,8 @@ plx <- pgrest .new conString, meta: do
   'pgrest.info': {+fo}
   'pgrest.member_count': {+fo}
   'pgrest.contingent': {}
+  'pgrest.issue': do
+    as: 'public.issue'
 
 {mount-default}:routes = pgrest.routes!
 
