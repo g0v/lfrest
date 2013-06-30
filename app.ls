@@ -14,7 +14,7 @@ plx <- pgrest .new conString, meta: do
   'pgrest.issue': do
     as: 'public.issue'
 
-{mount-default}:routes = pgrest.routes!
+{mount-default,with-prefix} = pgrest.routes!
 
 process.exit 0 if argv.boot
 {port=3000, prefix="/collections", host="127.0.0.1"} = argv
@@ -28,15 +28,6 @@ app.use express.json!
 pgparam = (req, res, next) ->
   session = req.cookies.liquid_feedback_session
   plx.query "select pgrest_param($1::json)" [{session}], next!
-
-route = (path, fn) ->
-  fullpath = "#{
-      switch path.0
-      | void => prefix
-      | '/'  => ''
-      | _    => "#prefix/"
-    }#path"
-  app.all fullpath, pgparam, routes.route path, fn
 
 <- plx.import-bundle \lfrest require.resolve \./package.json
 
@@ -92,7 +83,7 @@ CREATE OR REPLACE VIEW pgrest.contingent_left AS
       WHERE member_contingent_left.member_id = (select member_id from auth);
 """
 
-cols <- mount-default plx, 'pgrest', route
+cols <- mount-default plx, 'pgrest', with-prefix prefix, (path, r) -> app.all path, pgparam, r
 
 app.listen port, host
 console.log "Available collections:\n#{ cols.sort! * ' ' }"
