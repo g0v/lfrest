@@ -83,7 +83,11 @@ CREATE OR REPLACE VIEW pgrest.contingent_left AS
       WHERE member_contingent_left.member_id = (select member_id from auth);
 """
 
-cols <- mount-default plx, 'pgrest', with-prefix prefix, (path, r) -> app.all path, pgparam, r
+require! cors
+cols <- mount-default plx, 'pgrest', with-prefix prefix, (path, r) ->
+  args = [path, r]
+  args.splice 1, 0, cors! if argv.cors
+  app.all ...args
 
 app.listen port, host
 console.log "Available collections:\n#{ cols.sort! * ' ' }"
