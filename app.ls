@@ -13,6 +13,8 @@ plx <- pgrest .new conString, meta: do
   'pgrest.contingent': {}
   'pgrest.issue': do
     as: 'public.issue'
+  'pgrest.initiative': do
+    as: 'public.initiative'
 
 {mount-default,with-prefix} = pgrest.routes!
 
@@ -67,6 +69,9 @@ CREATE OR REPLACE VIEW pgrest.issue AS
     (SELECT COALESCE(ARRAY_TO_JSON(ARRAY_AGG(_)), '[]') FROM (SELECT * FROM initiative
         WHERE initiative.issue_id = issue.id) AS _) AS initiatives
   FROM issue;
+CREATE OR REPLACE VIEW pgrest.initiative AS
+  SELECT *
+  FROM initiative;
 """
 
 
