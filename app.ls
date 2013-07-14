@@ -90,8 +90,9 @@ CREATE OR REPLACE VIEW pgrest.contingent_left AS
 
 require! cors
 cols <- mount-default plx, 'pgrest', with-prefix prefix, (path, r) ->
-  args = [path, r]
-  args.splice 1, 0, cors! if argv.cors
+  args = [pgparam, r]
+  args.unshift cors! if argv.cors
+  args.unshift path
   app.all ...args
 
 app.listen port, host
