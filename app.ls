@@ -29,64 +29,11 @@ app.use express.json!
 
 pgparam = (req, res, next) ->
   session = req.cookies.liquid_feedback_session
-  plx.query "select pgrest_param($1::json)" [{session}], next!
-
-<- plx.import-bundle \lfrest require.resolve \./package.json
+  req.pgparam = {session}
+  next!
 
 lfrest = require \./lib
-for name, f of lfrest
-  if f.$plv8x
-    plx.mk-user-func "#name#that" "lfrest:#name", ->
-
-# XXX: make plv8x /sql define-schema reusable
-<- plx.query """
-DO $$
-BEGIN
-    IF NOT EXISTS(
-        SELECT schema_name
-          FROM information_schema.schemata
-          WHERE schema_name = 'pgrest'
-      )
-    THEN
-      EXECUTE 'CREATE SCHEMA pgrest';
-    END IF;
-END
-$$;
-
-CREATE OR REPLACE VIEW pgrest.info AS
-  SELECT
-   (select string from liquid_feedback_version) as core_version,
-   (select member_ttl from system_setting);
-
-CREATE OR REPLACE VIEW pgrest.member_count AS
-  SELECT * from member_count;
-
-CREATE OR REPLACE VIEW pgrest.contingent AS
-  SELECT * from contingent;
-
-CREATE OR REPLACE VIEW pgrest.issue AS
-  SELECT *,
-    (SELECT COALESCE(ARRAY_TO_JSON(ARRAY_AGG(_)), '[]') FROM (SELECT * FROM initiative
-        WHERE initiative.issue_id = issue.id) AS _) AS initiatives
-  FROM issue;
-CREATE OR REPLACE VIEW pgrest.initiative AS
-  SELECT *
-  FROM initiative;
-"""
-
-
-<- plx.mk-user-func "pgrest_param():json" ':~> plv8x.context'
-<- plx.mk-user-func "pgrest_param(text):int" ':~> plv8x.context?[it]'
-<- plx.mk-user-func "pgrest_param(text):text" ':~> plv8x.context?[it]'
-<- plx.mk-user-func "pgrest_param(json):json" ':~> plv8x.context = it'
-
-<- plx.query '''select pgrest_param('{}'::json)'''
-<- plx.query """
-CREATE OR REPLACE VIEW pgrest.contingent_left AS
-  WITH auth as (select ensure_member() as member_id)
-    SELECT * from member_contingent_left
-      WHERE member_contingent_left.member_id = (select member_id from auth);
-"""
+<- lfrest.bootstrap plx
 
 require! cors
 cols <- mount-default plx, 'pgrest', with-prefix prefix, (path, r) ->
